@@ -1,0 +1,29 @@
+name: Question / Help
+description: Ask a question or get help with your setup
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Not sure about something? Ask here. For open-ended discussion, consider using [GitHub Discussions](../../discussions) instead.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      placeholder: |
+        Proxmox: 8.x
+        Terraform: 1.x
+        Ansible: 2.x

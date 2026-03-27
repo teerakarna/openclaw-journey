@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussion — Show and Tell
+    url: https://github.com/teerakarna/openclaw-journey/discussions/categories/show-and-tell
+    about: Share your setup, customisations, or variations
+  - name: Discussion — Ideas
+    url: https://github.com/teerakarna/openclaw-journey/discussions/categories/ideas
+    about: Suggest a feature or improvement

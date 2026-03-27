@@ -1,0 +1,20 @@
+proxmox_url          = "https://192.168.1.100:8006/"
+proxmox_node         = "pve"
+proxmox_tls_insecure = true
+
+vm_name          = "openclaw"
+vm_id            = 200
+template_vm_id   = 9000
+
+vm_ip            = "192.168.1.200"
+vm_prefix_length = 24
+gateway          = "192.168.1.1"
+
+cpu_cores    = 2
+memory_mb    = 2048
+disk_size_gb = 20
+storage_pool = "local-lvm"
+
+network_bridge = "vmbr0"
+
+ssh_public_key = "ssh-ed25519 AAAA... your-key-here"

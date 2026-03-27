@@ -1,0 +1,85 @@
+---
+- name: Configure SSH hardening
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^#?PermitRootLogin',        line: 'PermitRootLogin no' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+    - { regexp: '^#?PubkeyAuthentication',   line: 'PubkeyAuthentication yes' }
+    - { regexp: '^#?X11Forwarding',          line: 'X11Forwarding no' }
+    - { regexp: '^#?MaxAuthTries',           line: 'MaxAuthTries 3' }
+  notify: restart sshd
+
+- name: Set UFW default deny inbound
+  community.general.ufw:
+    state: enabled
+    default: deny
+    direction: incoming
+
+- name: Set UFW default allow outbound
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: Allow SSH from local network
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    src: "{{ local_network | default('192.168.0.0/16') }}"
+
+- name: Allow Tailscale UDP
+  community.general.ufw:
+    rule: allow
+    port: "41641"
+    proto: udp
+
+- name: Configure fail2ban SSH jail
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled  = true
+      maxretry = 5
+      bantime  = 1h
+      findtime = 10m
+    mode: "0644"
+  notify: restart fail2ban
+
+- name: Enable unattended security upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    mode: "0644"
+
+- name: Apply sysctl hardening
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  loop:
+    - { name: net.ipv4.conf.all.rp_filter,       value: "1" }
+    - { name: net.ipv4.conf.default.rp_filter,   value: "1" }
+    - { name: net.ipv4.tcp_syncookies,            value: "1" }
+    - { name: net.ipv4.conf.all.accept_redirects, value: "0" }
+    - { name: net.ipv4.conf.all.send_redirects,   value: "0" }
+    - { name: kernel.dmesg_restrict,              value: "1" }
+    - { name: kernel.kptr_restrict,               value: "2" }
+
+handlers:
+  - name: restart sshd
+    service:
+      name: sshd
+      state: restarted
+
+  - name: restart fail2ban
+    service:
+      name: fail2ban
+      state: restarted

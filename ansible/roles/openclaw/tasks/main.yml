@@ -1,0 +1,71 @@
+---
+- name: Add NodeSource GPG key
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    state: present
+
+- name: Add NodeSource repository (Node.js 22 LTS)
+  apt_repository:
+    repo: "deb https://deb.nodesource.com/node_22.x nodistro main"
+    state: present
+    filename: nodesource
+
+- name: Install Node.js
+  apt:
+    name: nodejs
+    state: present
+    update_cache: true
+
+- name: Create openclaw system user
+  user:
+    name: openclaw
+    system: true
+    shell: /bin/bash
+    home: /opt/openclaw
+    create_home: true
+
+- name: Clone OpenClaw repository
+  git:
+    repo: "{{ openclaw_repo | default('https://github.com/steipete/openclaw') }}"
+    dest: /opt/openclaw/app
+    version: "{{ openclaw_version | default('main') }}"
+    force: false
+  become_user: openclaw
+
+- name: Install npm dependencies
+  community.general.npm:
+    path: /opt/openclaw/app
+  become_user: openclaw
+
+- name: Deploy OpenClaw .env config
+  template:
+    src: env.j2
+    dest: /opt/openclaw/app/.env
+    owner: openclaw
+    group: openclaw
+    mode: "0600"
+
+- name: Install openclaw systemd service
+  template:
+    src: openclaw.service.j2
+    dest: /etc/systemd/system/openclaw.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart openclaw
+
+- name: Enable and start openclaw
+  service:
+    name: openclaw
+    enabled: true
+    state: started
+
+handlers:
+  - name: reload systemd
+    systemd:
+      daemon_reload: true
+
+  - name: restart openclaw
+    service:
+      name: openclaw
+      state: restarted

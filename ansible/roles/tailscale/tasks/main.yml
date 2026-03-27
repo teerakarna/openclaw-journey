@@ -1,0 +1,33 @@
+---
+- name: Add Tailscale GPG key
+  apt_key:
+    url: https://pkgs.tailscale.com/stable/debian/bookworm.gpg
+    state: present
+
+- name: Add Tailscale apt repository
+  apt_repository:
+    repo: "deb https://pkgs.tailscale.com/stable/debian bookworm main"
+    state: present
+    filename: tailscale
+
+- name: Install Tailscale
+  apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+- name: Enable and start tailscaled
+  service:
+    name: tailscaled
+    enabled: true
+    state: started
+
+- name: Authenticate with Tailscale
+  command: >
+    tailscale up
+    --authkey="{{ tailscale_auth_key }}"
+    --hostname="openclaw"
+    --accept-routes
+  args:
+    creates: /var/lib/tailscale/tailscaled.state
+  no_log: true
