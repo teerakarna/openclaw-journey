@@ -59,13 +59,3 @@
     name: openclaw
     enabled: true
     state: started
-
-handlers:
-  - name: reload systemd
-    systemd:
-      daemon_reload: true
-
-  - name: restart openclaw
-    service:
-      name: openclaw
-      state: restarted
